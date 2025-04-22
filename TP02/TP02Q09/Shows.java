@@ -391,7 +391,7 @@ public class Shows implements Cloneable {
       }
     }
     long inicio = System.nanoTime();
-    int[] resultado = ordenarInsercao(lista);
+    int[] resultado = ordenarHeap(lista);
     long fim = System.nanoTime();
 
     double tempoSegundos = (fim - inicio) / 1_000_000_000.0;
@@ -427,7 +427,7 @@ public class Shows implements Cloneable {
    * @param lista Lista de Shows a ser ordenada.
    * @return Vetor contendo [comparações, movimentações].
    */
-  public static int[] ordenarInsercao(List<Shows> lista) {
+  public static int[] ordenarHeap(List<Shows> lista) {
     int comparacoes = 0;
     int movimentacoes = 0;
 

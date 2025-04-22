@@ -39,25 +39,29 @@ class TP1Q01 {
    * @return true se a entrada for "FIM", false caso contrário.
    */
   public static boolean verificarFim(String entrada) {
-    return (entrada.length() == 3 && entrada.equals("FIM"));
+    return entrada.length() == 3 &&
+           entrada.charAt(0) == 'F' &&
+           entrada.charAt(1) == 'I' &&
+           entrada.charAt(2) == 'M';
   }
 
   /**
    * Verifica se uma palavra é um palíndromo.
    *
-   * @param palavra A string a ser analisada.
+   * @param palavra A string a ser verificada.
    * @return true se a palavra for um palíndromo, false caso contrário.
    */
   public static boolean verificarPalindromo(String palavra) {
-    boolean resultado = true;
-    int meio = palavra.length() / 2;
+    int esquerda = 0;
+    int direita = palavra.length() - 1;
 
-    for (int i = 0; i < meio; i++) {
-      if (palavra.charAt(i) != palavra.charAt(palavra.length() - 1 - i)) {
-        resultado = false;
-        break;
+    while (esquerda < direita) {
+      if (palavra.charAt(esquerda) != palavra.charAt(direita)) {
+        return false;
       }
+      esquerda++;
+      direita--;
     }
-    return resultado;
+    return true;
   }
 }
