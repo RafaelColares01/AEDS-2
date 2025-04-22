@@ -385,65 +385,39 @@ public class Shows implements Cloneable {
     List<Shows> lista = new ArrayList<>();
     String entrada;
     while (!(entrada = sc.nextLine()).equals("FIM")) {
+
       if (mapaCsv.containsKey(entrada)) {
         Shows show = Shows.ler(mapaCsv.get(entrada));
         lista.add(show);
       }
     }
     long inicio = System.nanoTime();
-    int[] resultado = ordenarSelecao(lista);
-    long fim = System.nanoTime();
+    int comparacoes = 0;
 
+    while (!(entrada = sc.nextLine()).equals("FIM")) {
+      boolean encontrado = false;
+
+      for(Shows s : lista){
+        comparacoes++;
+        if (s.getTitle().equals(entrada)) {
+          encontrado = true;
+          break;
+        }
+      }
+      System.out.println(encontrado ? "SIM" : "NAO");
+    }
+
+    long fim = System.nanoTime();
     double tempoSegundos = (fim - inicio) / 1_000_000_000.0;
-    int comparacoes = resultado[0];
-    int movimentacoes = resultado[1];
 
     //Gerando arquivo de log
     String matricula = "771703";
-    PrintWriter log = new PrintWriter(
-      new FileWriter(matricula + "_selecao.txt")
-    );
+    PrintWriter log = new PrintWriter(new FileWriter(matricula + "_sequencial.txt"));
 
-    log.printf(
-      "771703\t%d\t%d\t%.6f",
-      comparacoes,
-      movimentacoes,
-      tempoSegundos
-    );
+    log.printf("%s\t%.6f\t%d", matricula, tempoSegundos, comparacoes);
     log.close();
 
-    for (Shows show : lista) {
-      show.imprimir();
-    }
-
+    
     sc.close();
-  }
-
-  public static int[] ordenarSelecao(List<Shows> lista) {
-    int comparacoes = 0;
-    int movimentacoes = 0;
-
-    for (int i = 0; i < lista.size() - 1; i++) {
-      int menor = i;
-      for (int j = i + 1; j < lista.size(); j++) {
-        comparacoes++;
-        if (
-          lista.get(j).getTitle().compareTo(lista.get(menor).getTitle()) < 0
-        ) {
-          menor = j;
-        }
-      }
-      if (i != menor) {
-        swap(lista, i, menor);
-        movimentacoes += 3;
-      }
-    }
-    return new int[] { comparacoes, movimentacoes };
-  }
-
-  public static void swap(List<Shows> lista, int i, int j) {
-    Shows temp = lista.get(i);
-    lista.set(i, lista.get(j));
-    lista.set(j, temp);
   }
 }

@@ -1,12 +1,11 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
 
 /**
  * Representa um show ou filme disponível em uma plataforma de streaming.
@@ -327,35 +326,28 @@ public class Shows implements Cloneable {
   }
 
   /**
-   * Divide uma linha CSV em campos, tratando corretamente aspas e vírgulas.
+   * Divide uma linha CSV em seus respectivos campos, respeitando campos entre aspas.
    *
-   * @param linha A linha CSV a ser dividida.
-   * @return Um array de strings com os campos separados.
+   * @param linha Linha do CSV.
+   * @return Array de campos.
    */
   private static String[] dividirLinhaCSV(String linha) {
     List<String> campos = new ArrayList<>();
-    StringBuilder campoAtual = new StringBuilder();
-    boolean dentroDeAspas = false;
+    StringBuilder campo = new StringBuilder();
+    boolean entreAspas = false;
 
-    for (char caractere : linha.toCharArray()) {
-      switch (caractere) {
-        case '"':
-          dentroDeAspas = !dentroDeAspas;
-          break;
-        case ',':
-          if (dentroDeAspas) {
-            campoAtual.append(caractere);
-          } else {
-            campos.add(campoAtual.toString().trim());
-            campoAtual.setLength(0);
-          }
-          break;
-        default:
-          campoAtual.append(caractere);
+    for (int i = 0; i < linha.length(); i++) {
+      char c = linha.charAt(i);
+      if (c == '"') {
+        entreAspas = !entreAspas;
+      } else if (c == ',' && !entreAspas) {
+        campos.add(campo.toString());
+        campo.setLength(0);
+      } else {
+        campo.append(c);
       }
     }
-
-    campos.add(campoAtual.toString().trim());
+    campos.add(campo.toString());
 
     return campos.toArray(new String[0]);
   }
@@ -383,67 +375,20 @@ public class Shows implements Cloneable {
     br.close();
 
     List<Shows> lista = new ArrayList<>();
-    String entrada;
-    while (!(entrada = sc.nextLine()).equals("FIM")) {
+    while (sc.hasNext()) {
+      String entrada = sc.nextLine();
+      if (entrada.equals("FIM")) break;
+
       if (mapaCsv.containsKey(entrada)) {
         Shows show = Shows.ler(mapaCsv.get(entrada));
         lista.add(show);
       }
     }
-    long inicio = System.nanoTime();
-    int[] resultado = ordenarSelecao(lista);
-    long fim = System.nanoTime();
-
-    double tempoSegundos = (fim - inicio) / 1_000_000_000.0;
-    int comparacoes = resultado[0];
-    int movimentacoes = resultado[1];
-
-    //Gerando arquivo de log
-    String matricula = "771703";
-    PrintWriter log = new PrintWriter(
-      new FileWriter(matricula + "_selecao.txt")
-    );
-
-    log.printf(
-      "771703\t%d\t%d\t%.6f",
-      comparacoes,
-      movimentacoes,
-      tempoSegundos
-    );
-    log.close();
 
     for (Shows show : lista) {
       show.imprimir();
     }
 
     sc.close();
-  }
-
-  public static int[] ordenarSelecao(List<Shows> lista) {
-    int comparacoes = 0;
-    int movimentacoes = 0;
-
-    for (int i = 0; i < lista.size() - 1; i++) {
-      int menor = i;
-      for (int j = i + 1; j < lista.size(); j++) {
-        comparacoes++;
-        if (
-          lista.get(j).getTitle().compareTo(lista.get(menor).getTitle()) < 0
-        ) {
-          menor = j;
-        }
-      }
-      if (i != menor) {
-        swap(lista, i, menor);
-        movimentacoes += 3;
-      }
-    }
-    return new int[] { comparacoes, movimentacoes };
-  }
-
-  public static void swap(List<Shows> lista, int i, int j) {
-    Shows temp = lista.get(i);
-    lista.set(i, lista.get(j));
-    lista.set(j, temp);
   }
 }
