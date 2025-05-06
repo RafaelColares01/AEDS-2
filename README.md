@@ -20,8 +20,8 @@ Os principais temas estudados e implementados ao longo da disciplina incluem:
 
 ## 🛠 Tecnologias Utilizadas
 
-- **Java** – 67.9%
-- **C** – 32.1%
+- **Java** – 66.6%
+- **C** – 33.4%
 
 ## 🚀 Como Executar
 
@@ -71,4 +71,5 @@ Os principais temas estudados e implementados ao longo da disciplina incluem:
 Projeto de uso educacional. Pode ser utilizado e adaptado livremente para
 fins acadêmicos.
 
-#### Desenvolvido por [@Rafael Colares](https://github.com/RafaelColares01)
+## Creditos
+- Desenvolvido por [@Rafael Colares](https://github.com/RafaelColares01)
