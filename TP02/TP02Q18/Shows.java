@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -391,7 +392,7 @@ public class Shows implements Cloneable {
       }
     }
     long inicio = System.nanoTime();
-    int[] resultado = ordenarSelecao(lista);
+    int[] resultado = ordenarQuicksortParcial(lista, 10);
     long fim = System.nanoTime();
 
     double tempoSegundos = (fim - inicio) / 1_000_000_000.0;
@@ -401,44 +402,92 @@ public class Shows implements Cloneable {
     //Gerando arquivo de log
     String matricula = "771703";
     PrintWriter log = new PrintWriter(
-      new FileWriter(matricula + "_selecao.txt")
+      new FileWriter(matricula + "_mergesort.txt")
     );
 
     log.printf(
-      "771703\t%d\t%d\t%.6f",
+      "%s\t%d\t%d\t%.6f",
+      matricula,
       comparacoes,
       movimentacoes,
       tempoSegundos
     );
     log.close();
 
-    for (Shows show : lista) {
-      show.imprimir();
+    for (int i = 0; i < Math.min(10, lista.size()); i++) {
+      lista.get(i).imprimir();
     }
 
     sc.close();
   }
 
-  public static int[] ordenarSelecao(List<Shows> lista) {
-    int comparacoes = 0;
-    int movimentacoes = 0;
+  /**
+   * Ordena os 10 primeiro elementos da lista de Shows usando o algoritmo de Quicksort parcial.
+   * Critério: type (primário), desempate por title.
+   *
+   * @param lista Lista de Shows a ser ordenada.
+   * @return Vetor contendo [comparações, movimentações].
+   */
+  public static int[] quicksortParcial(
+    List<Shows> lista,
+    int esq,
+    int dir,
+    int k,
+    int[] comparacoes,
+    int[] movimentacoes
+  ) {
+    if (esq >= dir) return new int[] { comparacoes[0], movimentacoes[0] };
 
-    for (int i = 0; i < lista.size() - 1; i++) {
-      int menor = i;
-      for (int j = i + 1; j < lista.size(); j++) {
-        comparacoes++;
-        if (
-          lista.get(j).getTitle().compareTo(lista.get(menor).getTitle()) < 0
-        ) {
-          menor = j;
-        }
-      }
-      if (i != menor) {
-        swap(lista, i, menor);
-        movimentacoes += 3;
+    int i = esq, j = dir;
+    Shows pivo = lista.get((esq + dir) / 2);
+
+    while (i <= j) {
+      while (menor(lista.get(i), pivo, comparacoes)) i++;
+      while (menor(pivo, lista.get(j), comparacoes)) j--;
+
+      if (i <= j) {
+        Collections.swap(lista, i, j);
+        movimentacoes[0] += 3;
+        i++;
+        j--;
       }
     }
-    return new int[] { comparacoes, movimentacoes };
+
+    if (esq < j) quicksortParcial(lista, esq, j, k, comparacoes, movimentacoes);
+    if (i < k && i < dir) quicksortParcial(
+      lista,
+      i,
+      dir,
+      k,
+      comparacoes,
+      movimentacoes
+    );
+
+    return new int[] { comparacoes[0], movimentacoes[0] };
+  }
+
+  private static boolean menor(Shows a, Shows b, int[] comparacoes) {
+    comparacoes[0]++;
+    if (a.getDate_added() == null && b.getDate_added() != null) return true;
+    if (a.getDate_added() != null && b.getDate_added() == null) return false;
+
+    if (a.getDate_added() == null && b.getDate_added() == null) {
+      return a.getTitle().compareTo(b.getTitle()) < 0;
+    }
+
+    int cmp = a.getDate_added().compareTo(b.getDate_added());
+    if (cmp != 0) return cmp < 0;
+
+    return a.getTitle().compareTo(b.getTitle()) < 0;
+  }
+
+  public static int[] ordenarQuicksortParcial(List<Shows> lista, int k)
+    throws IOException {
+    int[] comparacoes = { 0 };
+    int[] movimentacoes = { 0 };
+
+    quicksortParcial(lista, 0, lista.size() - 1, k, comparacoes, movimentacoes);
+    return new int[] { comparacoes[0], movimentacoes[0] };
   }
 
   public static void swap(List<Shows> lista, int i, int j) {

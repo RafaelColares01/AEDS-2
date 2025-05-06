@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -391,7 +392,7 @@ public class Shows implements Cloneable {
       }
     }
     long inicio = System.nanoTime();
-    int[] resultado = ordenarHeapsort(lista);
+    int[] resultado = ordenarMergesort(lista);
     long fim = System.nanoTime();
 
     double tempoSegundos = (fim - inicio) / 1_000_000_000.0;
@@ -401,7 +402,7 @@ public class Shows implements Cloneable {
     //Gerando arquivo de log
     String matricula = "771703";
     PrintWriter log = new PrintWriter(
-      new FileWriter(matricula + "_heapsort.txt")
+      new FileWriter(matricula + "_mergesort.txt")
     );
 
     log.printf(
@@ -421,83 +422,80 @@ public class Shows implements Cloneable {
   }
 
   /**
-   * Ordena a lista de Shows usando o algoritmo de Heapsort.
-   * Critério: type (primário), desempate por nome.
+   * Ordena a lista de Shows usando o algoritmo de MergeSort.
+   * Critério: type (primário), desempate por title.
    *
    * @param lista Lista de Shows a ser ordenada.
    * @return Vetor contendo [comparações, movimentações].
    */
-  public static int[] ordenarHeapsort(List<Shows> lista) throws IOException {
+  public static int[] ordenarMergesort(
+    List<Shows> lista,
+    int low,
+    int high,
+    final BufferedWriter log
+  ) throws IOException {
     int comparacoes = 0;
     int movimentacoes = 0;
 
-    int n = lista.size();
+    if (low < high) {
+      int middle = (low + high) / 2;
 
-    for (int i = n / 2 - 1; i >= 0; i--) {
-      comparacoes += heapify(lista, n, i);
-      movimentacoes++;
+      int[] left = ordenarMergesort(lista, low, middle, log);
+      int[] right = ordenarMergesort(lista, middle + 1, high, log);
+
+      merge(lista, low, middle, high);
+
+      comparacoes += left[0] + right[0];
+      movimentacoes += left[1] + right[1];
     }
 
-    for (int i = n - 1; i > 0; i--) {
-      swap(lista, 0, i);
-      movimentacoes += 3;
-
-      comparacoes += heapify(lista, i, 0);
-    }
     return new int[] { comparacoes, movimentacoes };
   }
 
-  private static int heapify(List<Shows> lista, int n, int i) {
-    int comparacoes = 0;
+  public static int[] ordenarMergesort(List<Shows> lista) {
+    try {
+      return ordenarMergesort(lista, 0, lista.size() - 1, null);
+    } catch (IOException e) {
+      e.printStackTrace();
+      return new int[] { 0, 0 };
+    }
+  }
 
-    int maior = i;
-    int esquerda = 2 * i + 1;
-    int direita = 2 * i + 2;
+  private static void merge(List<Shows> lista, int low, int middle, int high) {
+    List<Shows> temp = new ArrayList<>();
+    int i = low;
+    int j = middle + 1;
 
-    String diretorMaior = lista.get(maior).getDirector().toLowerCase();
-    String tituloMaior = lista.get(maior).getTitle().toLowerCase();
-
-    if (esquerda < n) {
-      String diretorEsq = lista.get(esquerda).getDirector().toLowerCase();
-      String tituloEsq = lista.get(esquerda).getTitle().toLowerCase();
-
-      comparacoes++;
+    while (i <= middle && j <= high) {
       if (
-        diretorEsq.compareTo(diretorMaior) > 0 ||
+        lista.get(i).getDuration().compareTo(lista.get(j).getDuration()) < 0 ||
         (
-          diretorEsq.equals(diretorMaior) &&
-          tituloEsq.compareTo(tituloMaior) > 0
+          lista.get(i).getDuration().compareTo(lista.get(j).getDuration()) ==
+          0 &&
+          lista.get(i).getTitle().compareTo(lista.get(j).getTitle()) < 0
         )
       ) {
-        maior = esquerda;
-        diretorMaior = diretorEsq;
-        tituloMaior = tituloEsq;
+        temp.add(lista.get(i));
+        i++;
+      } else {
+        temp.add(lista.get(j));
+        j++;
       }
     }
 
-    if (direita < n) {
-      String diretorDir = lista.get(direita).getDirector().toLowerCase();
-      String tituloDir = lista.get(direita).getTitle().toLowerCase();
-
-      comparacoes++;
-      if (
-        diretorDir.compareTo(diretorMaior) > 0 ||
-        (
-          diretorDir.equals(diretorMaior) &&
-          tituloDir.compareTo(tituloMaior) > 0
-        )
-      ) {
-        maior = direita;
-      }
+    while (i <= middle) {
+      temp.add(lista.get(i));
+      i++;
     }
 
-    if (maior != i) {
-      swap(lista, i, maior);
-
-      comparacoes += heapify(lista, n, maior);
+    while (j <= high) {
+      temp.add(lista.get(j));
+      j++;
     }
 
-    return comparacoes;
+    for (i = low; i <= high; i++) {
+      lista.set(i, temp.get(i - low));
+    }
   }
 
   public static void swap(List<Shows> lista, int i, int j) {

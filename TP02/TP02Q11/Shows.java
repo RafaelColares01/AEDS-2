@@ -391,7 +391,7 @@ public class Shows implements Cloneable {
       }
     }
     long inicio = System.nanoTime();
-    int[] resultado = ordenarHeapsort(lista);
+    int[] resultado = ordenarCountingSort(lista);
     long fim = System.nanoTime();
 
     double tempoSegundos = (fim - inicio) / 1_000_000_000.0;
@@ -401,7 +401,7 @@ public class Shows implements Cloneable {
     //Gerando arquivo de log
     String matricula = "771703";
     PrintWriter log = new PrintWriter(
-      new FileWriter(matricula + "_heapsort.txt")
+      new FileWriter(matricula + "_countingsort.txt")
     );
 
     log.printf(
@@ -421,83 +421,56 @@ public class Shows implements Cloneable {
   }
 
   /**
-   * Ordena a lista de Shows usando o algoritmo de Heapsort.
-   * Critério: type (primário), desempate por nome.
+   * Ordena a lista de Shows usando o algoritmo de CountingSort.
+   * Critério: type (primário), desempate por title.
    *
    * @param lista Lista de Shows a ser ordenada.
    * @return Vetor contendo [comparações, movimentações].
    */
-  public static int[] ordenarHeapsort(List<Shows> lista) throws IOException {
-    int comparacoes = 0;
+  public static int[] ordenarCountingSort(List<Shows> lista)
+    throws IOException {
+    final int[] comparacoes = { 0 };
     int movimentacoes = 0;
 
-    int n = lista.size();
+    if (lista.isEmpty()) return new int[] { comparacoes[0], movimentacoes };
 
-    for (int i = n / 2 - 1; i >= 0; i--) {
-      comparacoes += heapify(lista, n, i);
+    int minAno = Integer.MAX_VALUE;
+    int maxAno = Integer.MIN_VALUE;
+
+    for (Shows s : lista) {
+      int ano = s.getRelease_year();
+      if (ano < minAno) minAno = ano;
+      if (ano > maxAno) maxAno = ano;
+    }
+
+    int range = maxAno - minAno + 1;
+
+    List<List<Shows>> buckets = new ArrayList<>(range);
+    for (int i = 0; i < range; i++) {
+      buckets.add(new ArrayList<>());
+    }
+
+    for (Shows s : lista) {
+      buckets.get(s.getRelease_year() - minAno).add(s);
       movimentacoes++;
     }
 
-    for (int i = n - 1; i > 0; i--) {
-      swap(lista, 0, i);
-      movimentacoes += 3;
-
-      comparacoes += heapify(lista, i, 0);
+    for (List<Shows> bucket : buckets) {
+      bucket.sort((a, b) -> {
+        comparacoes[0]++;
+        return a.getTitle().toLowerCase().compareTo(b.getTitle().toLowerCase());
+      });
     }
-    return new int[] { comparacoes, movimentacoes };
-  }
 
-  private static int heapify(List<Shows> lista, int n, int i) {
-    int comparacoes = 0;
-
-    int maior = i;
-    int esquerda = 2 * i + 1;
-    int direita = 2 * i + 2;
-
-    String diretorMaior = lista.get(maior).getDirector().toLowerCase();
-    String tituloMaior = lista.get(maior).getTitle().toLowerCase();
-
-    if (esquerda < n) {
-      String diretorEsq = lista.get(esquerda).getDirector().toLowerCase();
-      String tituloEsq = lista.get(esquerda).getTitle().toLowerCase();
-
-      comparacoes++;
-      if (
-        diretorEsq.compareTo(diretorMaior) > 0 ||
-        (
-          diretorEsq.equals(diretorMaior) &&
-          tituloEsq.compareTo(tituloMaior) > 0
-        )
-      ) {
-        maior = esquerda;
-        diretorMaior = diretorEsq;
-        tituloMaior = tituloEsq;
+    int idx = 0;
+    for (List<Shows> bucket : buckets) {
+      for (Shows s : bucket) {
+        lista.set(idx++, s);
+        movimentacoes++;
       }
     }
 
-    if (direita < n) {
-      String diretorDir = lista.get(direita).getDirector().toLowerCase();
-      String tituloDir = lista.get(direita).getTitle().toLowerCase();
-
-      comparacoes++;
-      if (
-        diretorDir.compareTo(diretorMaior) > 0 ||
-        (
-          diretorDir.equals(diretorMaior) &&
-          tituloDir.compareTo(tituloMaior) > 0
-        )
-      ) {
-        maior = direita;
-      }
-    }
-
-    if (maior != i) {
-      swap(lista, i, maior);
-
-      comparacoes += heapify(lista, n, maior);
-    }
-
-    return comparacoes;
+    return new int[] { comparacoes[0], movimentacoes };
   }
 
   public static void swap(List<Shows> lista, int i, int j) {
